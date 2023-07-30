@@ -1,0 +1,40 @@
+# The 1st step is to create an unic internal S3 bucket in Francfurt for AWS accounts
+aws s3 mb s3://ahibchenko-ma --region eu-central-1
+
+# Download policy for S3 bucket from git https://gist.github.com/28e19577d446d310a0b95544f499c4d0.git
+git clone https://gist.github.com/28e19577d446d310a0b95544f499c4d0.git
+cd 28e19577d446d310a0b95544f499c4d0
+ls -la
+public-bucket-policy.json
+
+# Change bucket name in public-bucket-policy.json
+sed 's/bucket-name/ahibchenko-ma/g' public-bucket-policy.json
+cat public-bucket-policy.json
+
+{
+  "Version":"2012-10-17",
+  "Statement":[
+    {
+      "Sid":"PublicRead",
+      "Effect":"Allow",
+      "Principal": "*",
+      "Action":["s3:GetObject"],
+      "Resource":["arn:aws:s3:::ahibchenko-ma/*"]
+    }
+  ]
+}
+
+# Make public read only files in the bucket
+aws s3 sync s3://ahibchenko-ma s3://ahibchenko-ma --acl public-read
+
+#Let's upload HTML page to the bucket
+aws s3 cp /home/ubuntu/Main_Academy.html s3://ahibchenko-ma/
+
+# Enable public access to the bucket
+aws s3api put-public-access-block --bucket ahibchenko-ma --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+
+# Change publick policy for the bucket above
+aws s3api put-bucket-policy --bucket ahibchenko-ma --policy file://public-bucket-policy.json
+
+# Simple HTML page is available using a link
+https://ahibchenko-ma.s3.eu-central-1.amazonaws.com/Main_academy.html
